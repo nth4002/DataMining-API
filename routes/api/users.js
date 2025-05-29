@@ -1,0 +1,13 @@
+// routes/api/users.js
+const express = require("express");
+const router = express.Router();
+const userController = require("../../controllers/userController");
+
+router.get("/:userId/profile", userController.getUserProfile);
+router.get("/:userId/enrollments", userController.getUserEnrollments);
+router.get(
+  "/:userId/performance/:courseId",
+  userController.getStudentCoursePerformanceDetails
+);
+
+module.exports = router;

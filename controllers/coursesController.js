@@ -1,5 +1,6 @@
 // controllers/coursesController.js
-const courseModel = require("../models/courseModel"); // Use the new model
+const courseModel = require("../models/courseModel");
+const dashboardModel = require("../models/dashboardModel.js");
 
 const getAllCourses = async (req, res) => {
   try {
@@ -94,6 +95,33 @@ const getAllCourseMetadata = async (req, res) => {
   }
 };
 
+const getStudentsInCourse = async (req, res) => {
+  const { courseId } = req.params;
+  try {
+    const students = await dashboardModel.findUsersInCourse(courseId); // We'll define this model function
+    res.json(students);
+  } catch (error) {
+    console.error(`Error fetching students for course ${courseId}:`, error);
+    res.status(500).json({ message: "Failed to retrieve students" });
+  }
+};
+
+const getCourseVideoStats = async (req, res) => {
+  const { courseId } = req.params;
+  const { school } = req.query;
+  try {
+    const stats = await dashboardModel.getCourseVideoStatsSummary(
+      courseId,
+      school
+    );
+    res.json(stats);
+  } catch (error) {
+    console.error(
+      `Error fetching video stats for course: ${courseId}: ${error}`
+    );
+    res.status(500).json({ message: "Failed to retrieve video statistics" });
+  }
+};
 module.exports = {
   getAllCourses,
   getAllCourseMetadata,
@@ -101,4 +129,6 @@ module.exports = {
   createCourse, // Add new handler
   updateCourse,
   deleteCourse,
+  getStudentsInCourse,
+  getCourseVideoStats,
 };

@@ -16,4 +16,10 @@ router
   .put(coursesController.updateCourse) // For PUT /api/courses/:id (update specific course)
   .delete(coursesController.deleteCourse); // For DELETE /api/courses/:id (delete specific course)
 
+router.get("/:courseId/students", coursesController.getStudentsInCourse); // For GET /api/courses/${courseId}/students
+router.get(
+  "/:courseId/video-stats-summary",
+  coursesController.getCourseVideoStats
+); // For GET /api/courses/${courseId}/video-stats-summary
+
 module.exports = router;

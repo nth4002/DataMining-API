@@ -166,13 +166,107 @@ const getEngagementTrends = async (courseId, school) => {
     throw err;
   }
 };
+const findUsersInCourse = async (courseId) => {
+  // Select distinct users for the course.
+  // Also fetch their classification for this course, and school.
+  // If 'student_data' has a 'user_name' column, include it. Otherwise, we'd join with 'user_info'.
+  // For simplicity now, assuming we only need what's in student_data for the list.
+  const queryText = `
+        SELECT DISTINCT user_id, school, classification
+        FROM student_data
+        WHERE course_id = $1
+        ORDER BY user_id;
+    `;
+  // If you have 'user_name' in student_data:
+  // SELECT DISTINCT user_id, user_name, school, classification ...
+  const { rows } = await db.query(queryText, [courseId]);
+  return rows;
+};
 
-// Add getOverallEngagementComparison if you implement Row 4 from the design
+const getCourseVideoStatsSummary = async (courseId, school) => {
+  const queryParams = [courseId];
+  let schoolCondition = "";
+  if (school) {
+    queryParams.push(school);
+    schoolCondition = `AND school=$${queryParams.length}`;
+  }
+  const queryText = `
+        SELECT
+            COUNT(DISTINCT user_id) AS students_with_records,
+            AVG(average_watch_time_per_video_per_course) AS course_avg_watch_time_per_video,
+            AVG(total_watch_time_minutes_per_course) AS course_avg_total_watch_time,
+            SUM(total_watch_time_minutes_per_course) AS course_sum_total_watch_time,
+            PERCENTILE_CONT(0.5) WITHIN GROUP (ORDER BY total_watch_time_minutes_per_course) AS median_total_watch_time
+        FROM student_data
+        WHERE course_id = $1 ${schoolCondition};
+    `;
+  try {
+    const { rows } = await db.query(queryText, queryParams);
+    if (rows.length > 0) {
+      return {
+        studentsWithRecords: parseInt(rows[0].students_with_records || 0),
+        courseAvgWatchTimePerVideo: parseFloat(
+          rows[0].course_avg_watch_time_per_video || 0
+        ).toFixed(2),
+        courseAvgTotalWatchTime: parseFloat(
+          rows[0].course_avg_total_watch_time || 0
+        ).toFixed(2),
+        courseSumTotalWatchTime: parseFloat(
+          rows[0].course_sum_total_watch_time || 0
+        ).toFixed(2),
+        medianTotalWatchTime: parseFloat(
+          rows[0].median_total_watch_time || 0
+        ).toFixed(2),
+      };
+    }
+    return {
+      // Default if no data
+      studentsWithRecords: 0,
+      courseAvgWatchTimePerVideo: 0,
+      courseAvgTotalWatchTime: 0,
+      courseSumTotalWatchTime: 0,
+      medianTotalWatchTime: 0,
+    };
+  } catch (error) {
+    console.error("Error fetching course video stats summary:", error);
+    throw error;
+  }
+};
 
+const findEnrollmentsByUserId = async (userId) => {
+  const queryText = `
+        SELECT
+            course_id,
+            enroll_time,
+            classification,
+            total_watch_time_minutes_per_course,
+            (SELECT name FROM course_table ct WHERE ct.course_id = sd.course_id) as course_name 
+        FROM student_data sd
+        WHERE user_id = $1
+        ORDER BY enroll_time DESC;
+    `;
+  const { rows } = await db.query(queryText, [userId]);
+  return rows;
+};
+
+// This function might already exist or be similar to one fetching dashboard data,
+// but focused on a single student for a single course.
+const findStudentPerformanceInCourse = async (userId, courseId) => {
+  const queryText = `
+        SELECT *  -- Select all weekly data and overall stats
+        FROM student_data
+        WHERE user_id = $1 AND course_id = $2;
+    `;
+  const { rows, rowCount } = await db.query(queryText, [userId, courseId]);
+  return rowCount > 0 ? rows[0] : null;
+};
 module.exports = {
   getKpis,
   getPredictionDistribution,
   getAtRiskSnapshot,
   getEngagementTrends,
-  // getOverallEngagementComparison
+  findUsersInCourse,
+  getCourseVideoStatsSummary,
+  findEnrollmentsByUserId,
+  findStudentPerformanceInCourse,
 };

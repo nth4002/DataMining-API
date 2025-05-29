@@ -51,7 +51,7 @@ db.query("SELECT NOW()", (err, res) => {
 app.use("/", require("./routes/root")); // For basic root path (e.g., API welcome message)
 app.use("/api/courses", require("./routes/api/courses")); // Standardized API path
 app.use("/api/dashboard", require("./routes/api/dashboard")); // New dashboard routes
-
+app.use("/api/users", require("./routes/api/users"));
 // --- SERVE REACT FRONTEND (Production) ---
 // This should come AFTER your API routes.
 // It assumes your React app is built into a 'build' folder in a 'frontend' directory
