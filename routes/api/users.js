@@ -9,5 +9,8 @@ router.get(
   "/:userId/performance/:courseId",
   userController.getStudentCoursePerformanceDetails
 );
-
+router.get(
+  "/student/:userId/course-insights/:courseId",
+  userController.getStudentCourseInsights
+);
 module.exports = router;

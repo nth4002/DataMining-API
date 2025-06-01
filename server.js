@@ -20,6 +20,7 @@ app.use(logger);
 // 2. Cross-Origin Resource Sharing
 // Use your specific CORS options. Remove the generic app.use(cors()) if it was separate.
 app.use(cors(corsOptions));
+// app.use(cors({ origin: "*" }));
 
 // 3. Built-in middleware to handle URL-encoded form data
 app.use(express.urlencoded({ extended: false }));
